@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: frontend
+    container_name: frontend
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      - backend
+    links:
+      - backend
+    environment:
+      - BACKEND_URL=$BACKEND_URL
+    ports:
+      - '80:3000'
+    volumes:
+      - .:/frontend
+      - node_modules:/frontend/node_modules
+    command: npm start
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: backend
+    container_name: backend
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      - mongo-db
+    links:
+      - mongo-db
+    environment:
+      - MONGODB_SOURCE=$MONGODB_SOURCE
+    ports:
+      - '5000:5000'
+    volumes:
+      - .:/backend
+      - node_modules:/backend/node_modules
+    command: /backend/node_modules/.bin/nodemon index.js
+
+  mongo-db:
+    image: mongo:4.4.4
+    container_name: mongo-db
+    restart: unless-stopped
+    env_file: .env
+    # environment:
+    #   - MONGO_INITDB_ROOT_USERNAME=$MONGO_USERNAME
+    #   - MONGO_INITDB_ROOT_PASSWORD=$MONGO_PASSWORD
+    volumes:
+      - mongodb:/data/db
+      - mongodb_config:/data/configdb
+
+volumes:
+  mongodb:
+  mongodb_config:
+  node_modules:
